@@ -33,7 +33,7 @@ print(data['module'].mtype.shape)
 print(data['module'].pos.shape)
 
 N = len(dataset.data.y) // 5
-split_idx = dataset.get_idx_split(N, train_size=800, valid_size=250, seed=42)
+split_idx = dataset.get_idx_split(N, train_size=125, valid_size=125, seed=42)
 
 train_dataset, valid_dataset, test_dataset = dataset[split_idx['train']], dataset[split_idx['valid']], dataset[split_idx['test']]
 print('train, validaion, test:', len(train_dataset), len(valid_dataset), len(test_dataset))
@@ -61,7 +61,7 @@ train_mean, train_std = train_mean.to(device), train_std.to(device)
 val_mean, val_std = val_mean.to(device), val_std.to(device)
 
 # Loading model, loss function, and evaluation function
-model = HeSchNet(n_num=18, n_module=25, energy_and_force=False, cutoff=200, num_layers=6,
+model = HeSchNet(energy_and_force=False, cutoff=200, num_layers=6,
         hidden_channels=128, out_channels=5, num_filters=128, num_gaussians=500
 )
 loss_func = torch.nn.L1Loss()
@@ -94,7 +94,6 @@ model = model.to(device)
 
 potential_function = Potential(model, valid_dataset)
 
-# relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=10, max_iterations=1, max_outer_iterations=5)
 relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=20, max_iterations=10, max_outer_iterations=5)
 cost_guides, potentials = relaxer.process()
 

@@ -63,7 +63,7 @@ class HeOTADataset(InMemoryDataset):
 
     @property
     def raw_file_names(self):
-        return ['Cost_Map.npy', 'Guide.npy', 'Values.npy', 'Connection.npy', 'Placement.npy', 'PinConnection.npy']
+        return ['Cost_Map.npy', 'Guide.npy', 'Values.npy', 'PPConnection.npy', 'Placement.npy', 'PMConnection.npy', 'MMConnection.npy']
 
     @property
     def processed_file_names(self):
@@ -82,14 +82,17 @@ class HeOTADataset(InMemoryDataset):
         # Values
         data3 = np.load(osp.join(self.raw_dir, self.raw_file_names[2]), allow_pickle=True)
 
-        # Connection
+        # PPConnection
         data4 = np.load(osp.join(self.raw_dir, self.raw_file_names[3]), allow_pickle=True)
 
         # Placement
         data5 = np.load(osp.join(self.raw_dir, self.raw_file_names[4]), allow_pickle=True)
 
-        # Pin Connection
+        # PMConnection
         data6 = np.load(osp.join(self.raw_dir, self.raw_file_names[5]), allow_pickle=True)
+
+        # MMConnection
+        data7 = np.load(osp.join(self.raw_dir, self.raw_file_names[6]), allow_pickle=True)
 
         # label post_sim
         E = data3[:, :5]
@@ -112,11 +115,14 @@ class HeOTADataset(InMemoryDataset):
         # x, y, z position
         Pos = data[:N, 3]
 
-        # Connection
-        SRC_C, TAG_C = data4[:N, 0], data4[:N, 1]
+        # PPConnection
+        SRC_PP, TAG_PP = data4[:N, 0], data4[:N, 1]
 
-        # Pin Connection
-        SRC_P, TAG_P = data6[:N, 0], data6[:N, 1]
+        # PMConnection
+        SRC_PM, TAG_PM = data6[:N, 0], data6[:N, 1]
+
+        # MMConnection
+        SRC_MM, TAG_MM = data7[:N, 0], data7[:N, 1]
 
         # module idx
         Midx = data5[:N, 0]
@@ -135,8 +141,6 @@ class HeOTADataset(InMemoryDataset):
 
         data_list = []
         for i in tqdm(range(N)):
-            import pdb; pdb.set_trace()
-
             N_pin = len(Nid[i])
 
             Nid_i  = torch.tensor(Nid[i], dtype=torch.int64).reshape(N_pin)
@@ -183,17 +187,23 @@ class HeOTADataset(InMemoryDataset):
             data.nw = NW_i
 
             # Edges
-            src_c = torch.tensor(SRC_C[i], dtype=torch.int64)
-            tag_c = torch.tensor(TAG_C[i], dtype=torch.int64)
+            src_pp = torch.tensor(SRC_PP[i], dtype=torch.int64)
+            tag_pp = torch.tensor(TAG_PP[i], dtype=torch.int64)
 
-            c_edge_index = torch.vstack([src_c, tag_c])
+            c_edge_index = torch.vstack([src_pp, tag_pp])
             data['ap', 'connect', 'ap'].edge_index = c_edge_index
 
-            src_p = torch.tensor(SRC_P[i], dtype=torch.int64)
-            tag_p = torch.tensor(TAG_P[i], dtype=torch.int64)
+            src_pm = torch.tensor(SRC_PM[i], dtype=torch.int64)
+            tag_pm = torch.tensor(TAG_PM[i], dtype=torch.int64)
 
-            m_edge_index = torch.vstack([src_p, tag_p])
+            m_edge_index = torch.vstack([src_pm, tag_pm])
             data['ap', 'connect', 'module'].edge_index = m_edge_index
+
+            src_mm = torch.tensor(SRC_MM[i], dtype=torch.int64)
+            tag_mm = torch.tensor(TAG_MM[i], dtype=torch.int64)
+
+            m_edge_index = torch.vstack([src_mm, tag_mm])
+            data['module', 'connect', 'module'].edge_index = m_edge_index
 
             data.y = E_i
             data_list.append(data)

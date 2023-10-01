@@ -7,6 +7,7 @@ from torch_geometric.nn import radius_graph
 
 import pdb
 
+device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device("cpu")
 
 class update_e(torch.nn.Module):
     def __init__(self, hidden_channels, num_filters, num_gaussians, cutoff):
@@ -79,6 +80,12 @@ class update_v(torch.nn.Module):
 
         out = torch.cat([out1, out2], dim=0)
         out = self.layer_norm(out)
+
+        if v.shape != out.shape:
+            N_V, H   = v.shape
+            N_Out, _ = out.shape
+            zeros = torch.zeros((N_V - N_Out, H),  device=device)
+            out = torch.concat([out, zeros], axis=0)
         return v + out
 
 
@@ -142,7 +149,7 @@ class HeSchNet(torch.nn.Module):
             num_gaussians (int, optional): The number of gaussians :math:`\mu`. (default: :obj:`50`)
             cutoff (float, optional): Cutoff distance for interatomic interactions. (default: :obj:`10.0`).
     """
-    def __init__(self, energy_and_force=False, cutoff=10.0, num_layers=6, hidden_channels=128, out_channels=1, num_filters=128, num_gaussians=50):
+    def __init__(self, n_num, n_module, energy_and_force=False, cutoff=10.0, num_layers=6, hidden_channels=128, out_channels=1, num_filters=128, num_gaussians=50):
         super(HeSchNet, self).__init__()
 
         self.energy_and_force = energy_and_force
@@ -153,8 +160,8 @@ class HeSchNet(torch.nn.Module):
         self.num_filters = num_filters
         self.num_gaussians = num_gaussians
 
-        self.init_v = Embedding(18, hidden_channels)
-        self.init_m_v = Embedding(25, hidden_channels)
+        self.init_v = Embedding(n_num, hidden_channels)
+        self.init_m_v = Embedding(n_module, hidden_channels)
 
         self.dist_emb = emb(0.0, cutoff, num_gaussians)
 
@@ -187,7 +194,7 @@ class HeSchNet(torch.nn.Module):
         pos1 *= g
         # value_g = g.detach()
         pos2 *= g.detach()[0]
-        
+
         pos = torch.cat([pos1, pos2], dim=0)
         batch = torch.cat([batch1, batch2], dim=0)
 
@@ -206,10 +213,13 @@ class HeSchNet(torch.nn.Module):
         # ap distance graph & ap module distance graph
         mask_1 = (edge_index[0] < len(pos1)) & (edge_index[1] < len(pos1))
         mask_2 = (edge_index[0] < len(pos1)) & (edge_index[1] >= len(pos1))
+        mask_3 = (edge_index[0] >= len(pos1)) & (edge_index[1] >= len(pos1))
 
-        edge_index = edge_index[:, mask_1 | mask_2]
+        edge_index = edge_index[:, mask_1 | mask_2 | mask_3]
         edge_index = torch.cat([edge_index, data['ap', 'connect','ap'].edge_index,
-                                        data['ap', 'connect', 'module'].edge_index], dim=-1)
+                                data['ap', 'connect', 'module'].edge_index,
+                                data['module', 'connect', 'module'].edge_index
+                                ], dim=-1)
 
         row, col = edge_index
         # dist = ((pos[row] - pos[col]) * g).norm(dim=-1)

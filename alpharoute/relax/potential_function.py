@@ -7,8 +7,9 @@ from torch_geometric.data import DataLoader
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device("cpu")
 
 class Potential(object):
-    def __init__(self, model, dataset):
+    def __init__(self, model, dataset, r=1.0e-10):
         self.model = model
+        self.r = r
         self.data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
         self.model.eval()
 
@@ -20,6 +21,7 @@ class Potential(object):
 
         preds = torch.Tensor([]).to(device)
         targets = torch.Tensor([]).to(device)
+        scale = torch.Tensor([-1.0, 1.0, 1.0, 1.0, -1.0]).to(device)
         loss_accum = 0
 
         for step, data in enumerate(self.data_loader):
@@ -28,7 +30,7 @@ class Potential(object):
             data.g = cost_guide
             out = self.model(data)
 
-            loss = torch.sum(out)
+            loss = torch.sum(out * scale) + self.r * torch.sum(torch.log(data.g + 1)) + self.r * torch.sum(torch.log(200 - data.g))
             if evaluate:
                 loss_accum += loss.detach().cpu()
             else:
@@ -39,6 +41,7 @@ class Potential(object):
 
     def optimize(self, cost_guide, max_iterations, alpha=0.01, epsilon=0.001):
         X = torch.Tensor(cost_guide).to(device).requires_grad_()
+
         optimizer = torch.optim.LBFGS([X], lr=0.01)
 
         for step in tqdm(range(max_iterations)):

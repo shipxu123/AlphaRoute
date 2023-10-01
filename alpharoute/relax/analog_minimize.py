@@ -53,12 +53,12 @@ def _run_one_iteration(
     attempts = 0
     while not minimized and attempts < max_attempts:
         attempts += 1
-        try:
-            print(f"Minimizing analog, attempt {attempts} of {max_attempts}.")
-            ret = _minimize(cost_guide, potential_function, max_iterations=max_iterations)
-            minimized = True
-        except Exception as e:  # pylint: disable=broad-except
-            print(e)
+    # try:
+        print(f"Minimizing analog, attempt {attempts} of {max_attempts}.")
+        ret = _minimize(cost_guide, potential_function, max_iterations=max_iterations)
+        minimized = True
+    # except Exception as e:  # pylint: disable=broad-except
+    #     print(e)
 
     if not minimized:
         raise ValueError(f"Minimization failed after {max_attempts} attempts.")

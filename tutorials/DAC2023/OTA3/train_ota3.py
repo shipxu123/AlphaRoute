@@ -15,7 +15,7 @@ print(device)
 
 # load dataset
 
-dataset = HeOTADataset(root = '/home/pxu/data/paroute/DAC/', name='ota2_large')
+dataset = HeOTADataset(root = '/home/pxu/data/paroute/DAC/', name='ota3_large')
 data = dataset[0]
 
 # print access point information
@@ -61,7 +61,7 @@ train_mean, train_std = train_mean.to(device), train_std.to(device)
 val_mean, val_std = val_mean.to(device), val_std.to(device)
 
 # Loading model, loss function, and evaluation function
-model = HeSchNet(n_num=18, n_module=25, energy_and_force=False, cutoff=200, num_layers=6,
+model = HeSchNet(n_num=27, n_module=36, energy_and_force=False, cutoff=200, num_layers=6,
         hidden_channels=128, out_channels=5, num_filters=128, num_gaussians=500
 )
 loss_func = torch.nn.L1Loss()
@@ -86,7 +86,8 @@ def get_pa_guide(num_samples, total_pa_lenth):
     return params
 
 # hard code here
-N_pin = 156
+N_pin    = 202
+N_module = 36
 pa_guide_choices = get_pa_guide(num_samples, total_pa_lenth)
 cost_guide_distribution = PA_Distribution(pa_guide_choices, N_pin)
 

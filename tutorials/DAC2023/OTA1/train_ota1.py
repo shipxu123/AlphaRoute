@@ -15,7 +15,7 @@ print(device)
 
 # load dataset
 
-dataset = HeOTADataset(root = '/home/pxu/data/paroute/DAC/', name='ota2_large')
+dataset = HeOTADataset(root = '/home/pxu/data/paroute/DAC/', name='ota1_large')
 data = dataset[0]
 
 # print access point information
