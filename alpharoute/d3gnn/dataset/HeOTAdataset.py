@@ -208,7 +208,6 @@ class HeOTADataset(InMemoryDataset):
             data.y = E_i
             data_list.append(data)
 
-        pdb.set_trace()
         if self.pre_filter is not None:
             data_list = [data for data in data_list if self.pre_filter(data)]
         if self.pre_transform is not None:

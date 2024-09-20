@@ -33,7 +33,7 @@ print(data['module'].mtype.shape)
 print(data['module'].pos.shape)
 
 N = len(dataset.data.y) // 5
-split_idx = dataset.get_idx_split(N, train_size=800, valid_size=250, seed=42)
+split_idx = dataset.get_idx_split(N, train_size=800, valid_size=2, seed=42)
 
 train_dataset, valid_dataset, test_dataset = dataset[split_idx['train']], dataset[split_idx['valid']], dataset[split_idx['test']]
 print('train, validaion, test:', len(train_dataset), len(valid_dataset), len(test_dataset))
@@ -71,7 +71,7 @@ evaluation = ThreeDEvaluator()
 run3d = run()
 run3d.run(device, train_dataset, valid_dataset, valid_dataset,
         model, loss_func, evaluation, 
-        epochs=20, batch_size=1, vt_batch_size=1, lr=0.005, lr_decay_factor=0.5, lr_decay_step_size=15)
+        epochs=1, batch_size=1, vt_batch_size=1, lr=0.005, lr_decay_factor=0.5, lr_decay_step_size=15)
 
 num_samples = 2
 total_pa_lenth = 3
@@ -95,10 +95,16 @@ model = model.to(device)
 
 potential_function = Potential(model, valid_dataset)
 
-# relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=10, max_iterations=1, max_outer_iterations=5)
-relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=20, max_iterations=10, max_outer_iterations=5)
-cost_guides, potentials = relaxer.process()
+import time
 
-with open("cost_guide_result.txt", "w") as file:
-    file.write(str(cost_guides))
-    file.write(str(potentials))
+start_time = time.time()
+# relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=10, max_iterations=1, max_outer_iterations=5)
+relaxer = AnalogRelaxation(cost_guide_distribution, potential_function, pool_size=15, max_iterations=5, max_outer_iterations=3)
+cost_guides, potentials = relaxer.process()
+end_time = time.time()
+
+print(f"Relaxation Time : {end_time - start_time}")
+
+# with open("cost_guide_result.txt", "w") as file:
+#     file.write(str(cost_guides))
+#     file.write(str(potentials))

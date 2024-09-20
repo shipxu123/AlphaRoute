@@ -13,6 +13,9 @@ class Potential(object):
         self.data_loader = DataLoader(dataset, batch_size=1, shuffle=False)
         self.model.eval()
 
+    def set_loader(self, data_loader):
+        self.data_loader = data_loader
+
     def forward(self, cost_guide, evaluate=True):
         if(evaluate):
             print(f"evaluate potential of {cost_guide.int().tolist()}")
@@ -26,6 +29,12 @@ class Potential(object):
 
         for step, data in enumerate(self.data_loader):
             data = data.to(device)
+            if data.g.shape != cost_guide.shape:
+                import pdb
+                print(data.g.shape)
+                print(cost_guide.shape)
+                pdb.set_trace()
+
             assert(data.g.shape == cost_guide.shape)
             data.g = cost_guide
             out = self.model(data)

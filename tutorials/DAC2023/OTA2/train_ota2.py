@@ -9,12 +9,14 @@ from alpharoute.d3gnn.evaluation import ThreeDEvaluator # MAE for QM9 and MD17
 from alpharoute.relax import PA_Distribution, Potential, AnalogRelaxation
 
 import pdb
+import time
 
 device = torch.device('cuda:0') if torch.cuda.is_available() else torch.device("cpu")
 print(device)
 
 # load dataset
 
+start_t = time.time()
 dataset = HeOTADataset(root = '/home/pxu/data/paroute/DAC/', name='ota2_large')
 data = dataset[0]
 
@@ -72,7 +74,10 @@ run3d = run()
 run3d.run(device, train_dataset, valid_dataset, valid_dataset,
         model, loss_func, evaluation, 
         epochs=20, batch_size=1, vt_batch_size=1, lr=0.005, lr_decay_factor=0.5, lr_decay_step_size=15)
+end_t = time.time()
+print(f"Trianing Runtime : {((end_t - start_t)*1000)}")
 
+start_t1 = time.time()
 num_samples = 2
 total_pa_lenth = 3
 
@@ -101,3 +106,6 @@ cost_guides, potentials = relaxer.process()
 with open("cost_guide_result.txt", "w") as file:
     file.write(str(cost_guides))
     file.write(str(potentials))
+end_t1 = time.time()
+
+print(f"Relexation Runtime : {((end_t1 - start_t1)*1000)}")
